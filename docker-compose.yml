@@ -1,35 +1,21 @@
 version: '3.8'
 
 services:
-  # 1. SERVICIO DE BASE DE DATOS MONGODB
   mongo:
-    # Usamos la imagen oficial de MongoDB
     image: mongo:latest
-    # Le damos un nombre de contenedor fijo para fácil referencia
     container_name: mongodb_gestion
-    # Abrimos el puerto interno de Mongo (27017) al host (lo mapeamos al 27017)
     ports:
       - "27017:27017"
-    # Opcional: Para persistir los datos de la base de datos entre ejecuciones
     volumes:
       - mongo_data:/data/db 
 
-  # 2. SERVICIO DE LA API DE EXPRESS (Tu aplicación)
   api:
-    # Indicamos a Docker Compose que construya la imagen usando el Dockerfile en el directorio actual
     build: .
-    # Le damos un nombre de contenedor fijo
     container_name: api_gestion_grupos
-    # Mapeamos el puerto interno de la API (3000) al puerto 3000 del host
     ports:
       - "3000:3000"
-    # El servicio 'api' depende de que el servicio 'mongo' se haya iniciado.
-    # Esto ayuda a que el contenedor de la API espere a que Mongo esté disponible.
     depends_on:
       - mongo
-    # Reinicia la API si falla, a menos que se detenga manualmente
-    restart: always
 
-# Volumen para la persistencia de datos de Mongo
 volumes:
   mongo_data:

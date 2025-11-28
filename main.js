@@ -248,3 +248,53 @@ app.post('/grupos/:idGrupo/agregar-usuario', async (req, res) => {
         res.status(400).send({ mensaje: "Error al agregar usuario al grupo.", detalle: error.message });
     }
 });
+
+/*name: Build and Push Docker Image klk mike putero
+
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'api/**'
+      - '.github/workflows/docker-push.yml'
+  workflow_dispatch: # Permite ejecutar manualmente
+
+env:
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/ejemplo-api-docker
+  DOCKER_TAG: latest
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Construir y subir imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api 
+          file: ./api/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:buildcache
+          cache-to: type=inline
+
+      - name: Mostrar información de la imagen
+        run: |
+          echo "Imagen construida y subida exitosamente:"
+          echo "  - Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          echo "  - Docker Hub: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/ejemplo-api-docker"*/

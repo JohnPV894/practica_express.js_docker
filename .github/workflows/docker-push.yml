@@ -1,0 +1,57 @@
+name: 🐳 Construir y Subir Imagen Docker de la API
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      # Se dispara solo si cambian archivos clave en la raíz
+      - 'package.json'
+      - 'main.js'
+      - 'Dockerfile'
+      - '.github/workflows/docker-push.yml'
+  workflow_dispatch: # Permite ejecutar el flujo de trabajo manualmente desde GitHub
+
+env:
+  # Nombre de la imagen en Docker Hub: usa tu usuario de GitHub/el nombre del repo
+  DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/api-node-mongo
+  DOCKER_TAG: latest
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Configurar Docker Buildx
+        # Herramienta para construir imágenes de manera eficiente
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login a Docker Hub
+        # Utiliza los Secrets configurados en GitHub (Docker Username y Password/Token)
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏗️ Construir y Subir Imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          # Contexto: . (la raíz del repositorio)
+          context: . 
+          # Archivo: Dockerfile (en la raíz)
+          file: Dockerfile 
+          push: true
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          # Opcional: uso de caché para construcciones más rápidas
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:buildcache
+          cache-to: type=inline
+
+      - name: Mostrar información de la imagen
+        run: |
+          echo "Imagen construida y subida exitosamente:"
+          echo "  - Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          echo "  - Docker Hub: https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/api-node-mongo/tags"

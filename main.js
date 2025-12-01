@@ -12,10 +12,10 @@ app.use(express.json());
 // // CONFIGURACION DE MONGO
 // ----------------------------------------------------
 
-const uriMongo = "mongodb://localhost:27017";
+const uriMongo = process.env.MONGO_URI ||"mongodb://localhost:27017";
 const nombreBaseDeDatos = "gestionGruposUsuarios";
-let coleccionUsuarios; // Aquí guardamos la referencia a la colección de Usuarios
-let coleccionGrupos;   // Aquí guardamos la referencia a la colección de Grupos
+let coleccionUsuarios; //  colección de Usuarios
+let coleccionGrupos;   //  colección de Grupos
 
 /**
  * Función para conectar a MongoDB
@@ -23,7 +23,7 @@ let coleccionGrupos;   // Aquí guardamos la referencia a la colección de Grupo
  */
 async function conectarMongo() {
     try {
-        // Estableciendo la conexión, parce
+        // Estableciendo la conexión
         const clienteMongo = new MongoClient(uriMongo);
         await clienteMongo.connect();
         
@@ -42,7 +42,7 @@ async function conectarMongo() {
         });
 
     } catch (error) {
-        console.error("¡Uyyy! Falló la conexión a MongoDB:", error);
+        console.error("Falló la conexión a MongoDB:", error);
         // Si no conecta, es mejor que la aplicación se caiga o no inicie
         process.exit(1); 
     }
@@ -83,7 +83,6 @@ app.post('/usuarios', async (req, res) => {
 // OBTENER todos los usuarios (GET)
 app.get('/usuarios', async (req, res) => {
     try {
-        // Buscamos todos los documentos en la colección
         const usuarios = await coleccionUsuarios.find({}).toArray();
         res.status(200).send(usuarios);
     } catch (error) {
@@ -104,7 +103,7 @@ app.get('/usuarios/:id', async (req, res) => {
         }
         res.status(200).send(usuario);
     } catch (error) {
-        // Si el ID tiene un formato incorrecto (ej: no es una cadena de 24 caracteres)
+        // Si el ID tiene un formato incorrecto 
         res.status(400).send({ mensaje: "ID de usuario inválido.", detalle: error.message });
     }
 });
@@ -142,10 +141,10 @@ app.delete('/usuarios/:id', async (req, res) => {
         const resultado = await coleccionUsuarios.deleteOne({ _id: new ObjectId(idUsuario) });
 
         if (resultado.deletedCount === 0) {
-            return res.status(404).send({ mensaje: "Usuario no encontrado para eliminar." });
+            return res.status(400).send({ mensaje: "Usuario no encontrado para eliminar." });
         }
         // Devolvemos una respuesta sin contenido, pues ya se eliminó
-        res.status(204).send(); 
+        res.status(200).send(); 
 
     } catch (error) {
         res.status(400).send({ mensaje: "Error al eliminar el usuario.", detalle: error.message });
@@ -249,7 +248,8 @@ app.post('/grupos/:idGrupo/agregar-usuario', async (req, res) => {
     }
 });
 
-/*name: Build and Push Docker Image klk mike putero
+/* DOCUMENTO FACILITADO POR MI DOCENTE CON EL FIN DE AYUDARNOS A ELABORAR LA PRACTICA
+name: Build and Push Docker Image klk mike putero
 
 
 on:

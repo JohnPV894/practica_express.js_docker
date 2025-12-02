@@ -10,7 +10,7 @@ services:
       - mongo_data:/data/db 
 
   api:
-    image: johny050824/api_docker_compose:v1.0.0
+    image: johny050824/api_docker_compose:latest
     build: .
     container_name: api_docker_compose
     ports:

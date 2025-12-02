@@ -10,8 +10,9 @@ services:
       - mongo_data:/data/db 
 
   api:
+    image: johny050824/api_docker_compose:v1.0.0
     build: .
-    container_name: api_gestion_grupos
+    container_name: api_docker_compose
     ports:
       - "3000:3000"
     depends_on:

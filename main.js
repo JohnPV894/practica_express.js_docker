@@ -247,6 +247,9 @@ app.post('/grupos/:idGrupo/agregar-usuario', async (req, res) => {
         res.status(400).send({ mensaje: "Error al agregar usuario al grupo.", detalle: error.message });
     }
 });
+/*
+docker compose up -d --build
+*/
 
 /* DOCUMENTO FACILITADO POR MI DOCENTE CON EL FIN DE AYUDARNOS A ELABORAR LA PRACTICA
 name: Build and Push Docker Image klk mike putero

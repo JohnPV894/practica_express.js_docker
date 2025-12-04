@@ -55,5 +55,24 @@ jobs:
       - name: Mostrar información de la imagen
         run: |
           echo "Imagen construida y subida exitosamente:"
-          echo "  - Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
-          echo "  - Docker Hub: https://hub.docker.com/r/johny050824/api_docker_compose/tags"
+          echo "  - Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          echo "  - Docker Hub: https://hub.docker.com/r/johny050824/api_docker_compose/tags"
+
+      # --- PASO DE NOTIFICACIÓN DE TELEGRAM AÑADIDO ---
+      - name: 🚨 Notificación de Éxito en Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_ID_CHAT }}
+          token: ${{ secrets.TELEGRAM_API_TOKEN }}
+          message: |
+            ✅ **[Éxito]** Imagen Docker Subida
+            
+            **Repositorio:** ${{ github.repository }}
+            **Rama:** ${{ github.ref_name }}
+            **Autor:** ${{ github.actor }}
+            **Imagen:** ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+            
+            [Ver en Docker Hub]
+            (https://hub.docker.com/r/${{ env.DOCKER_USERNAME }}/${{ github.repository }}/tags)
+          format: markdown
+          disable_web_page_preview: true

@@ -1,0 +1,813 @@
+\documentclass{article}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{tocloft}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+
+\geometry{a4paper, margin=1in}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Automatización CI/CD con Docker y GitHub Actions}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    showstringspaces=false,
+    columns=fullflexible,
+    frame=single,
+    rulecolor=\color{gray},
+    backgroundcolor=\color{white},
+    captionpos=b,
+}
+
+\lstdefinelanguage{yaml}{
+  keywords={true, false, null, y, n, True, False, Null, Yes, No, on, off, On, Off},
+  identifierstyle=\color{black}\bfseries,
+  sensitive=false,
+  comment=[l]{\#},
+  string=[s]{"}{"},
+  string=[s]{'}{'},
+  columns=fixed,
+  morekeywords={version, services, image, container_name, ports, volumes, depends_on, environment, build, name, on, push, branches, paths, workflow_dispatch, env, jobs, runs_on, steps, uses, with, run, format}
+}
+
+\lstdefinelanguage{bash}{
+  keywords={FROM, WORKDIR, COPY, RUN, EXPOSE, CMD, ENTRYPOINT, ENV, ARG, ADD, USER, LABEL},
+  identifierstyle=\color{black}\bfseries,
+  sensitive=false,
+  comment=[l]{\#},
+  string=[s]{"}{"},
+  string=[s]{'}{'},
+  columns=fixed,
+}
+
+\title{Documentación Técnica: \\Automatización CI/CD con Docker y GitHub Actions}
+\author{John Arenales}
+\date{\today}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,
+    urlcolor=blue,
+}
+
+\begin{document}
+
+%============================================================
+%                    PORTADA
+%============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{4cm}
+    {\Huge \textbf{Documentación Técnica} \par}
+    \vspace{0.5cm}
+    {\LARGE Automatización CI/CD con Docker y GitHub Actions \par}
+    \vspace{3cm}
+    {\Large \textbf{Autor:} John Arenales \par}
+    \vspace{0.5cm}
+    {\Large \textbf{Asignatura:} Afondamiento nas Competencias Profesionais \par}
+    \vspace{3cm}
+    {\Large Actividad 1\_4: Docker \par}
+    \vspace{4cm}
+    {\large Fecha: \today \par}
+    \vfill
+\end{titlepage}
+
+\newpage
+
+%============================================================
+%                    ÍNDICE
+%============================================================
+\setcounter{tocdepth}{3}
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+%============================================================
+%                 SECCIÓN 1: INTRODUCCIÓN
+%============================================================
+\section{Introducción}
+\label{sec:introduccion}
+
+\subsection{Objetivo y Alcance del Documento}
+\label{subsec:objetivo}
+
+El propósito de este documento es proporcionar una **guía técnica completa y profesional** para la implementación, despliegue y mantenimiento de una solución de **Integración Continua y Despliegue Continuo (CI/CD)** utilizando Docker, GitHub Actions y notificaciones por Telegram.
+
+Este documento cubre:
+
+\begin{enumerate}
+    \item \textbf{Arquitectura del Sistema:} Descripción de la aplicación API REST y su estructura tecnológica.
+    \item \textbf{Contenerización:} Empaquetamiento de la aplicación Node.js/Express en contenedores Docker portables.
+    \item \textbf{Orquestación Local:} Definición y ejecución de servicios múltiples (API y MongoDB) mediante Docker Compose.
+    \item \textbf{Automatización CI/CD:} Configuración de flujos de trabajo en GitHub Actions para construcción y publicación automática de imágenes.
+    \item \textbf{Notificaciones:} Integración de alertas en tiempo real mediante Telegram.
+\end{enumerate}
+
+El alcance incluye la documentación técnica, códigos ejecutables y procedimientos operacionales para desarrolladores y equipos de DevOps.
+
+\subsection{Visión General del Proyecto}
+\label{subsec:vision}
+
+Este proyecto implementa una **solución integral de DevOps** para una API RESTful de gestión de usuarios y grupos. La aplicación principal está desarrollada en \textbf{Node.js con Express} (versión 5.1.0) y utiliza \textbf{MongoDB} (mongo:latest) como base de datos NoSQL.
+
+\subsubsection{Objetivos Clave}
+
+\begin{itemize}
+    \item \textbf{Portabilidad:} La aplicación funciona de manera idéntica en cualquier máquina que tenga Docker instalado, eliminando la fricción entre entornos de desarrollo, prueba y producción.
+    \item \textbf{Automatización:} Cada cambio en el repositorio desencadena automáticamente un flujo de construcción, prueba y publicación de la imagen Docker sin intervención manual.
+    \item \textbf{Trazabilidad:} El equipo de desarrollo recibe notificaciones inmediatas en Telegram sobre el estado de cada despliegue, mejorando la comunicación y la respuesta ante fallos.
+\end{itemize}
+
+\subsubsection{Flujo del Proyecto}
+
+\begin{enumerate}
+    \item El desarrollador realiza un \texttt{git push} al repositorio en GitHub en las ramas \texttt{main} o \texttt{master}.
+    \item GitHub Actions detecta el cambio y dispara el flujo de trabajo \texttt{build-and-push}.
+    \item El flujo construye una nueva imagen Docker de la API y la sube a Docker Hub.
+    \item Se envía una notificación a Telegram confirmando el éxito (o reporte del error).
+    \item La imagen está lista para ser desplegada en cualquier entorno que necesite la aplicación.
+\end{enumerate}
+
+%============================================================
+%              SECCIÓN 2: ARQUITECTURA Y STACK
+%============================================================
+\section{Arquitectura y Stack Tecnológico}
+\label{sec:arquitectura}
+
+\subsection{Stack Resumen}
+\label{subsec:stack_resumen}
+
+La siguiente tabla presenta todos los componentes tecnológicos utilizados en este proyecto:
+
+\begin{table}[h]
+\centering
+\caption{Componentes del Stack Tecnológico}
+\label{tab:stack}
+\begin{tabular}{|m{2cm}|m{3.5cm}|m{4cm}|m{4.5cm}|}
+\hline
+\textbf{Categoría} & \textbf{Tecnología/Herramienta} & \textbf{Versión/Especificación} & \textbf{Rol en el Proyecto} \\
+\hline
+\textbf{Runtime} & Node.js & v25.2.1 & Entorno de ejecución de la API RESTful. \\
+\hline
+\textbf{Framework Web} & Express.js & v5.1.0 & Marco de trabajo para construir y servir la API REST de gestión de usuarios y grupos. \\
+\hline
+\textbf{Base de Datos} & MongoDB & mongo:latest & Base de datos NoSQL para la persistencia de datos de usuarios y grupos. \\
+\hline
+\textbf{Contenedorización} & Docker & Dockerfile & Empaquetamiento de la API Node.js en una imagen portable e inmutable. \\
+\hline
+\textbf{Orquestación Local} & Docker Compose & v3.8 & Definición y ejecución de la aplicación multi-contenedor (API + MongoDB) en desarrollo. \\
+\hline
+\textbf{Control de Versiones} & GitHub & Repositorio & Alojamiento del código fuente y plataforma base para CI/CD. \\
+\hline
+\textbf{CI/CD} & GitHub Actions & docker-push.yml & Automatización del pipeline: checkout, build, push y notificación. \\
+\hline
+\textbf{Registro de Imágenes} & Docker Hub & johny050824/api\_docker\_compose & Repositorio centralizado para almacenar y distribuir imágenes Docker. \\
+\hline
+\textbf{Notificaciones} & Telegram & appleboy/telegram-action & Canal de comunicación en tiempo real para alertas de despliegue. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Componentes Clave del Sistema}
+\label{subsec:componentes_clave}
+
+\subsubsection{API de Gestión}
+\label{subsubsec:api_gestion}
+
+La API es una aplicación Node.js con Express que proporciona endpoints RESTful para operaciones CRUD (Create, Read, Update, Delete) sobre dos entidades principales:
+
+\begin{itemize}
+    \item \textbf{Usuarios:} Registros con campos como nombre, apellido, edad y teléfono.
+    \item \textbf{Grupos:} Colecciones de usuarios que pueden organizarse bajo un nombre común.
+\end{itemize}
+
+La API establece una conexión con MongoDB mediante la URI especificada en la variable de entorno \texttt{MONGO\_URI}. Esta variable permite que la configuración se adapte dinámicamente según el entorno (desarrollo, prueba, producción) sin cambiar el código.
+
+\subsubsection{Archivos de Configuración (Infrastructure as Code - IaC)}
+\label{subsubsec:iac}
+
+Los siguientes archivos actúan como la ``infraestructura como código'' (IaC) y definen completamente cómo debe construirse, ejecutarse y desplegarse la aplicación:
+
+\begin{itemize}
+    \item \textbf{Dockerfile:} Define la imagen Docker de la API especificando la imagen base, dependencias, puertos expuestos y comandos de inicio.
+    \item \textbf{docker-compose.yml:} Orquesta los servicios de MongoDB y API localmente, definiendo redes, volúmenes y dependencias.
+    \item \textbf{docker-push.yml (Workflow):} Automatiza el pipeline de integración continua en GitHub Actions.
+    \item \textbf{.Dockerignore:} Especifica archivos que no deben incluirse en la imagen Docker (node\_modules, .env, .git).
+\end{itemize}
+
+%============================================================
+%          SECCIÓN 3: REQUISITOS DEL SISTEMA
+%============================================================
+\section{Requisitos del Sistema}
+\label{sec:requisitos}
+
+\subsection{Requisitos Funcionales (RF)}
+\label{subsec:requisitos_funcionales}
+
+La siguiente tabla define los requisitos funcionales que el sistema debe cumplir:
+
+\begin{table}[h]
+\centering
+\caption{Requisitos Funcionales del Sistema}
+\label{tab:rf}
+\begin{tabular}{|l|l|m{10cm}|}
+\hline
+\textbf{ID} & \textbf{Requisito} & \textbf{Descripción} \\
+\hline
+RF1 & API de Gestión & La aplicación debe exponer endpoints REST para ejecutar operaciones CRUD completas sobre Usuarios y Grupos almacenados en MongoDB. \\
+\hline
+RF2 & Ejecución Unificada & El desarrollador debe poder iniciar toda la infraestructura (API + MongoDB) con un único comando: \texttt{docker-compose up -d --build}. \\
+\hline
+RF3 & Despliegue Automático & Cada \texttt{git push} a las ramas \texttt{main} o \texttt{master} desencadena automáticamente la construcción y publicación de la imagen en Docker Hub. \\
+\hline
+RF4 & Notificación de Estado & Al completar el despliegue automático, se envía un mensaje de Telegram indicando éxito o fracaso del proceso. \\
+\hline
+RF5 & Portabilidad & La API debe ejecutarse sin cambios dentro de su contenedor Docker, sin depender de software instalado directamente en el equipo anfitrión. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Requisitos No Funcionales (RNF)}
+\label{subsec:requisitos_no_funcionales}
+
+La siguiente tabla define los atributos de calidad y restricciones que el sistema debe satisfacer:
+
+\begin{table}[h]
+\centering
+\caption{Requisitos No Funcionales del Sistema}
+\label{tab:rnf}
+\begin{tabular}{|l|l|m{10cm}|}
+\hline
+\textbf{ID} & \textbf{Requisito} & \textbf{Descripción} \\
+\hline
+RNF1 & Seguridad & Las credenciales sensibles (Docker Hub, Telegram) se almacenan como \textbf{GitHub Secrets}, nunca expuestas en código fuente ni archivos de configuración. \\
+\hline
+RNF2 & Disponibilidad & La imagen Docker en Docker Hub debe ser accesible 24/7 para descargas y despliegues en cualquier momento. \\
+\hline
+RNF3 & Documentación & El flujo de trabajo debe estar completamente documentado y comentado para permitir mantenimiento futuro. \\
+\hline
+RNF4 & Configurabilidad & Los parámetros de conexión a MongoDB (URI, puerto, base de datos) se cargan mediante variables de entorno, permitiendo adaptación a diferentes contextos. \\
+\hline
+RNF5 & Mantenibilidad & El código LaTeX y los scripts deben seguir estándares profesionales de formato e indentación. \\
+\hline
+\end{tabular}
+\end{table}
+
+%============================================================
+%     SECCIÓN 4: INSTRUCCIONES DE USO LOCAL
+%============================================================
+\section{Instrucciones de Uso Local}
+\label{sec:uso_local}
+
+\subsection{Prerrequisitos}
+\label{subsec:prerequisitos}
+
+Antes de ejecutar el proyecto localmente, asegúrate de tener instalados los siguientes componentes:
+
+\begin{itemize}
+    \item \textbf{Docker:} \url{https://www.docker.com/products/docker-desktop} - Versión 20.10 o superior.
+    \item \textbf{Docker Compose:} Incluido en Docker Desktop. Verifica con \texttt{docker-compose --version}.
+    \item \textbf{Git:} \url{https://git-scm.com/} - Para clonar el repositorio.
+    \item \textbf{Acceso al Repositorio:} Permisos de lectura en \url{https://github.com/JohnPV894/practica_express.js_docker}.
+\end{itemize}
+
+\subsection{Ejecución de la Aplicación}
+\label{subsec:ejecucion}
+
+\subsubsection{Paso 1: Clonar el Repositorio}
+
+\begin{lstlisting}[language=bash]
+git clone https://github.com/JohnPV894/practica_express.js_docker.git
+cd practica_express.js_docker
+\end{lstlisting}
+
+\subsubsection{Paso 2: Construir e Iniciar los Servicios}
+
+\begin{lstlisting}[language=bash]
+docker-compose up -d --build
+\end{lstlisting}
+
+Este comando:
+\begin{enumerate}
+    \item Construye la imagen Docker de la API usando el \texttt{Dockerfile}.
+    \item Descarga la imagen oficial de MongoDB.
+    \item Crea y inicia ambos contenedores en segundo plano (\texttt{-d}).
+    \item Expone la API en \texttt{http://localhost:3000} y MongoDB en \texttt{localhost:27017}.
+\end{enumerate}
+
+\subsubsection{Paso 3: Verificar el Estado}
+
+\begin{lstlisting}[language=bash]
+docker-compose ps
+\end{lstlisting}
+
+Deberías ver dos contenedores en ejecución: \texttt{api\_docker\_compose} y \texttt{mongodb\_gestion}.
+
+\subsection{Prueba de la API}
+\label{subsec:prueba_api}
+
+La API expone los siguientes endpoints para gestionar Usuarios y Grupos. A continuación se presentan ejemplos de uso con \texttt{curl}:
+
+\subsubsection{Crear un Usuario}
+
+\begin{lstlisting}[language=bash]
+curl -X POST http://localhost:3000/usuarios \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "edad": 28,
+    "telefono": "555-1234"
+  }'
+\end{lstlisting}
+
+Respuesta esperada:
+\begin{lstlisting}[language=bash]
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "nombre": "Juan",
+  "apellido": "Pérez",
+  "edad": 28,
+  "telefono": "555-1234"
+}
+\end{lstlisting}
+
+\subsubsection{Obtener Todos los Usuarios}
+
+\begin{lstlisting}[language=bash]
+curl http://localhost:3000/usuarios
+\end{lstlisting}
+
+\subsubsection{Obtener un Usuario por ID}
+
+\begin{lstlisting}[language=bash]
+curl http://localhost:3000/usuarios/507f1f77bcf86cd799439011
+\end{lstlisting}
+
+\subsubsection{Actualizar un Usuario}
+
+\begin{lstlisting}[language=bash]
+curl -X PUT http://localhost:3000/usuarios/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "telefono": "555-5678"
+  }'
+\end{lstlisting}
+
+\subsubsection{Eliminar un Usuario}
+
+\begin{lstlisting}[language=bash]
+curl -X DELETE http://localhost:3000/usuarios/507f1f77bcf86cd799439011
+\end{lstlisting}
+
+%============================================================
+%   SECCIÓN 5: IMPLEMENTACIÓN TÉCNICA Y CI/CD
+%============================================================
+\section{Implementación Técnica y CI/CD}
+\label{sec:implementacion}
+
+\subsection{Dockerfile}
+\label{subsec:dockerfile}
+
+\subsubsection{Código del Dockerfile}
+
+\begin{lstlisting}[language=bash]
+FROM node:20
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm","start"]
+\end{lstlisting}
+
+\subsubsection{Explicación Detallada de Cada Instrucción}
+
+\begin{itemize}
+    \item \textbf{\texttt{FROM node:20}:} Define la imagen base. Utiliza Node.js versión 20 como sistema operativo base con Node.js y npm preinstalados. Este es el punto de partida para la imagen.
+    
+    \item \textbf{\texttt{WORKDIR /app}:} Establece el directorio de trabajo dentro del contenedor. Todos los comandos subsiguientes se ejecutan en este contexto. Si el directorio no existe, Docker lo crea automáticamente.
+    
+    \item \textbf{\texttt{COPY package*.json ./}:} Copia los archivos \texttt{package.json} y \texttt{package-lock.json} (si existe) desde el anfitrión al contenedor. El asterisco (\texttt{*}) actúa como comodín. Esta se hace \textbf{antes} de copiar el código fuente para aprovechar el caché de Docker.
+    
+    \item \textbf{\texttt{RUN npm install}:} Instala las dependencias del proyecto listadas en \texttt{package.json}. Esto crea el directorio \texttt{node\_modules} dentro del contenedor.
+    
+    \item \textbf{\texttt{COPY . .}:} Copia el resto del código fuente del proyecto (excepto lo listado en \texttt{.Dockerignore}) al directorio de trabajo del contenedor.
+    
+    \item \textbf{\texttt{EXPOSE 3000}:} Documenta que el contenedor escucha en el puerto 3000. Esta instrucción es informativa y no publica automáticamente el puerto; es necesario usar \texttt{-p} en \texttt{docker run} o mapear puertos en Docker Compose.
+    
+    \item \textbf{\texttt{CMD ["npm","start"]}:} Define el comando predeterminado cuando se inicia el contenedor. Ejecuta \texttt{npm start}, que a su vez ejecuta \texttt{node main.js} según se define en \texttt{package.json}.
+\end{itemize}
+
+\subsubsection{Archivo .Dockerignore}
+
+\begin{lstlisting}[language=bash]
+node_modules
+.env
+.git
+npm-debug.log
+\end{lstlisting}
+
+Este archivo especifica qué archivos y directorios \textbf{no} deben incluirse en la imagen Docker:
+
+\begin{itemize}
+    \item \textbf{\texttt{node\_modules}:} Se reinstalará durante el \texttt{RUN npm install}, por lo que no es necesario copiarlo.
+    \item \textbf{\texttt{.env}:} Archivo con variables de entorno sensibles que no deben estar en la imagen.
+    \item \textbf{\texttt{.git}:} Historial de Git innecesario en la imagen de producción.
+    \item \textbf{\texttt{npm-debug.log}:} Archivos de depuración que no aportan valor.
+\end{itemize}
+
+\subsection{docker-compose.yml}
+\label{subsec:docker_compose}
+
+\subsubsection{Código de Docker Compose}
+
+\begin{lstlisting}[language=yaml]
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb_gestion
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db 
+
+  api:
+    image: johny050824/api_docker_compose:latest
+    build: .
+    container_name: api_docker_compose
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
+\end{lstlisting}
+
+\subsubsection{Explicación de la Configuración}
+
+\paragraph{Sección \texttt{version}}
+
+\texttt{version: '3.8'} especifica la versión del formato Docker Compose. La versión 3.8 es compatible con Docker Engine 19.03.0+.
+
+\paragraph{Servicio \texttt{mongo}}
+
+\begin{itemize}
+    \item \textbf{\texttt{image: mongo:latest}:} Usa la imagen oficial más reciente de MongoDB desde Docker Hub.
+    \item \textbf{\texttt{container\_name: mongodb\_gestion}:} Nombre amigable para el contenedor.
+    \item \textbf{\texttt{ports}:} Mapea el puerto 27017 del contenedor al puerto 27017 del anfitrión, permitiendo acceso local a la BD.
+    \item \textbf{\texttt{volumes}:} Monta el volumen nombrado \texttt{mongo\_data} en \texttt{/data/db}, asegurando la persistencia de datos incluso si el contenedor se elimina.
+\end{itemize}
+
+\paragraph{Servicio \texttt{api}}
+
+\begin{itemize}
+    \item \textbf{\texttt{image}:} Referencia a la imagen en Docker Hub. Se actualiza cuando se ejecuta \texttt{docker-compose pull}.
+    \item \textbf{\texttt{build: .}:} Indica que Docker Compose debe construir la imagen usando el Dockerfile en el directorio actual si la imagen local no existe.
+    \item \textbf{\texttt{container\_name}:} Nombre identificable para el contenedor de la API.
+    \item \textbf{\texttt{ports}:} Mapea puerto 3000 (interno) a puerto 3000 (anfitrión) para acceso a la API.
+    \item \textbf{\texttt{depends\_on: [mongo]}:} Especifica que el servicio \texttt{api} depende del servicio \texttt{mongo}. Docker Compose inicia MongoDB primero, luego la API. \textbf{Nota:} Esto solo controla el orden de inicio, no garantiza que MongoDB esté completamente listo. La aplicación debe reintentar la conexión si es necesario.
+\end{itemize}
+
+\paragraph{Sección \texttt{volumes}}
+
+\texttt{mongo\_data:} Define un volumen nombrado que persiste los datos de MongoDB incluso cuando se detienen los contenedores. Los volúmenes se almacenan en \texttt{/var/lib/docker/volumes/} en el anfitrión.
+
+\subsection{Flujo de Trabajo de GitHub Actions}
+\label{subsec:workflow}
+
+\subsubsection{Código Completo del Workflow}
+
+\begin{lstlisting}[language=yaml]
+name: Construir y Subir Imagen Docker de la API
+
+on:
+  push: 
+    branches:
+      - main
+      - master
+    paths:
+      - 'package.json'
+      - 'main.js'
+      - 'Dockerfile'
+      - '.github/workflows/docker-push.yml'
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: johny050824
+  DOCKER_IMAGE_NAME: johny050824/api_docker_compose
+  DOCKER_TAG: latest
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: docker
+    
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Construir y Subir Imagen Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{env.DOCKER_IMAGE_NAME}}:${{ env.DOCKER_TAG }}
+          cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_NAME }}:buildcache
+          cache-to: type=inline
+
+      - name: Mostrar informacion de la imagen
+        run: |
+          echo "Imagen construida y subida exitosamente:"
+          echo "  - Imagen: ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          echo "  - Docker Hub: https://hub.docker.com/r/johny050824/api_docker_compose/tags"
+
+      - name: Notificacion de Exito en Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_ID_CHAT }}
+          token: ${{ secrets.TELEGRAM_API_TOKEN }}
+          message: |
+            [Exito] Imagen Docker Subida
+            Repositorio: ${{ github.repository }}
+            Rama: ${{ github.ref_name }}
+            Autor: ${{ github.actor }}
+            Imagen: ${{ env.DOCKER_IMAGE_NAME}}:${{ env.DOCKER_TAG }}
+          format: markdown
+          disable_web_page_preview: true
+\end{lstlisting}
+
+\subsubsection{Descripción del Proceso CI/CD}
+\label{subsubsec:descripcion_workflow}
+
+El flujo de trabajo implementa un pipeline automatizado con los siguientes componentes:
+
+\paragraph{Triggers (\texttt{on})}
+
+\begin{itemize}
+    \item \textbf{\texttt{push} a \texttt{main} o \texttt{master}:} El workflow se activa solo cuando se realizan cambios específicos en archivos críticos (\texttt{package.json}, \texttt{main.js}, \texttt{Dockerfile}, el workflow mismo). Esto evita ejecuciones innecesarias.
+    \item \textbf{\texttt{workflow\_dispatch}:} Permite ejecutar el workflow manualmente desde la interfaz de GitHub sin necesidad de un commit.
+\end{itemize}
+
+\paragraph{Variables de Entorno (\texttt{env})}
+
+\begin{itemize}
+    \item \texttt{DOCKER\_USERNAME}: Usuario de Docker Hub.
+    \item \texttt{DOCKER\_IMAGE\_NAME}: Nombre completo de la imagen en Docker Hub.
+    \item \texttt{DOCKER\_TAG}: Etiqueta de la imagen (latest, v1.0, etc.).
+\end{itemize}
+
+\paragraph{Pasos del Job \texttt{build-and-push}}
+
+\begin{enumerate}
+    \item \textbf{Checkout código (Paso 1):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{actions/checkout@v4}
+        \item \textbf{Función:} Descarga el código del repositorio al ejecutor de GitHub Actions.
+        \item \textbf{Resultado:} El directorio de trabajo contiene todo el código fuente, Dockerfile y configuraciones.
+    \end{itemize}
+    
+    \item \textbf{Configurar Docker Buildx (Paso 2):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{docker/setup-buildx-action@v3}
+        \item \textbf{Función:} Inicializa Docker Buildx, una herramienta avanzada para construir imágenes Docker con soporte para múltiples arquitecturas (amd64, arm64, etc.).
+        \item \textbf{Ventaja:} Permite construcciones más rápidas y cachés más eficientes.
+    \end{itemize}
+    
+    \item \textbf{Login a Docker Hub (Paso 3):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{docker/login-action@v3}
+        \item \textbf{Función:} Autentica contra Docker Hub usando el usuario y contraseña/token almacenados en GitHub Secrets.
+        \item \textbf{Seguridad:} Las credenciales nunca se exponenen en los logs del workflow.
+        \item \textbf{Parámetros:}
+        \begin{itemize}
+            \item \texttt{username}: \texttt{\$\{\{ env.DOCKER\_USERNAME \}\}}
+            \item \texttt{password}: \texttt{\$\{\{ secrets.DOCKER\_PASSWORD \}\}} (secreto cifrado en GitHub)
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Construir y Subir Imagen Docker (Paso 4):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{docker/build-push-action@v5}
+        \item \textbf{Función:} Construye la imagen Docker usando el Dockerfile y la sube inmediatamente a Docker Hub.
+        \item \textbf{Parámetros clave:}
+        \begin{itemize}
+            \item \texttt{context}: Raíz del repositorio (donde reside el Dockerfile).
+            \item \texttt{file}: Ruta del Dockerfile.
+            \item \texttt{push: true}: Especifica que la imagen debe subirse a Docker Hub.
+            \item \texttt{tags}: Etiqueta de la imagen (\texttt{johny050824/api\_docker\_compose:latest}).
+            \item \texttt{cache-from} y \texttt{cache-to}: Optimizan construcciones futuras reutilizando capas.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Mostrar Información de la Imagen (Paso 5):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{run} (script de shell)
+        \item \textbf{Función:} Imprime información sobre la imagen construida en los logs del workflow para verificación.
+        \item \textbf{Salida:} URLs directas a la imagen en Docker Hub para acceso rápido.
+    \end{itemize}
+    
+    \item \textbf{Notificación en Telegram (Paso 6):}
+    \begin{itemize}
+        \item \textbf{Acción:} \texttt{appleboy/telegram-action@master}
+        \item \textbf{Función:} Envía un mensaje de Telegram notificando el éxito del despliegue.
+        \item \textbf{Información incluida:}
+        \begin{itemize}
+            \item Estado: [Éxito]
+            \item Nombre del repositorio
+            \item Rama desde la que se disparó
+            \item Usuario que realizó el commit
+            \item Imagen completa en Docker Hub
+        \end{itemize}
+        \item \textbf{Parámetros:}
+        \begin{itemize}
+            \item \texttt{to}: ID del chat de Telegram (secreto).
+            \item \texttt{token}: Token de la API del bot de Telegram (secreto).
+            \item \texttt{format: markdown}: Formatea el mensaje con soporte Markdown.
+        \end{itemize}
+    \end{itemize}
+\end{enumerate}
+
+%============================================================
+%       SECCIÓN 6: CONFIGURACIÓN DE NOTIFICACIONES
+%============================================================
+\section{Configuración de Notificaciones}
+\label{sec:configuracion_telegram}
+
+\subsection{Integración con Telegram}
+\label{subsec:integracion_telegram}
+
+Telegram proporciona un mecanismo confiable y en tiempo real para notificar al equipo de desarrollo sobre el estado de los despliegues. Los pasos a continuación detallan cómo configurar un bot de Telegram y vincularlo con GitHub Actions.
+
+\subsubsection{Paso 1: Crear el Bot en BotFather}
+\label{subsubsec:paso1_botfather}
+
+BotFather es el bot oficial de Telegram para crear y gestionar otros bots. Sigue estos pasos:
+\begin{center}
+    \includegraphics[width=0.9\textwidth]{img/botPadre.png}
+\end{center}
+
+\begin{enumerate}
+    \item Abre Telegram y busca el usuario \textbf{\texttt{@BotFather}}.
+    \item Inicia una conversación escribiendo \texttt{/start}.
+    \item Escribe el comando \texttt{/newbot} para crear un nuevo bot.
+    \item BotFather solicitará un nombre para el bot. Ingresa algo como \texttt{API Docker Deploy Bot}.
+    \item Luego solicitará un nombre de usuario único. Ingresa algo como \texttt{api\_docker\_bot\_tu\_nombre}.
+    \item BotFather responderá con un mensaje que contiene el \textbf{TOKEN del bot}. Ejemplo:
+    \item \begin{center}
+      \includegraphics[width=0.9\textwidth]{img/tokenBot.png}
+    \end{center}
+    \begin{center}
+        \texttt{Done! Congratulations on your new bot. You will find it at https://t.me/api\_docker\_bot. You can now add a description, about section and profile picture for your bot, see /help for a list of commands.}
+    \end{center}
+    \item \textbf{Copia y guarda el TOKEN en un lugar seguro. COMO LOS SECRECTS } Tendrá un formato como: \texttt{123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11}
+    \item \begin{center}
+      \includegraphics[width=0.9\textwidth]{img/SECRETOS.png}
+    \end{center}
+\end{enumerate}
+
+\subsubsection{Paso 2: Obtener el ID del Chat}
+\label{subsubsec:paso2_chat_id}
+
+Para que el bot envíe mensajes al equipo, necesita el ID del chat. Sigue estos pasos:
+
+\begin{enumerate}
+    \item En Telegram, busca tu bot recién creado (el nombre de usuario que especificaste en BotFather).
+    \item Abre el chat con el bot.
+    \item \textbf{Envía cualquier mensaje} al bot, como por ejemplo \texttt{/hola} o simplemente \texttt{Hola}.
+    \item \textbf{Importante:} El bot solo procesa mensajes después de recibir al menos uno del usuario.
+    \item Abre tu navegador y accede a la siguiente URL, reemplazando \texttt{<TOKEN>} con el token obtenido en el Paso 1:
+    \begin{center}
+        \url{https://api.telegram.org/bot<TOKEN>/getUpdates}
+    \end{center}
+    \item Se mostrará una respuesta JSON. Busca el campo \texttt{"chat":\{"id": XXXXX}} dentro del contenido. El número \textbf{XXXXX} es tu \textbf{ID del chat}.
+    \item Ejemplo de respuesta:
+    \begin{lstlisting}[language=bash]
+{
+  "ok": true,
+  "result": [
+    {
+      "update_id": 123456789,
+      "message": {
+        "message_id": 1,
+        "date": 1607000000,
+        "chat": {
+          "id": 987654321,
+          "type": "private"
+        },
+        "text": "Hola",
+        "from": {
+          "id": 987654321,
+          "is_bot": false,
+          "first_name": "Tu Nombre"
+        }
+      }
+    }
+  ]
+}
+    \end{lstlisting}
+    \item En este ejemplo, el ID del chat es \textbf{987654321}.
+\end{enumerate}
+
+\subsubsection{Paso 3: Almacenar Credenciales en GitHub Secrets}
+\label{subsubsec:paso3_github_secrets}
+
+Los tokens y IDs sensibles deben almacenarse como \textbf{GitHub Secrets} para que el workflow pueda acceder a ellos de forma segura:
+
+\begin{enumerate}
+    \item Dirígete al repositorio en GitHub: \url{https://github.com/JohnPV894/practica_express.js_docker}
+    \item Haz clic en la pestaña \textbf{Settings} (Configuración).
+    \item En el menú lateral izquierdo, selecciona \textbf{Secrets and variables} \texttt{>} \textbf{Actions}.
+    \item Haz clic en el botón \textbf{New repository secret}.
+    \item Crea los siguientes secrets:
+    
+    \begin{itemize}
+        \item \textbf{Nombre:} \texttt{DOCKER\_PASSWORD}
+        \begin{itemize}
+            \item \textbf{Valor:} Tu token de acceso personal de Docker Hub (puedes generarlo en \url{https://hub.docker.com/settings/security}).
+            \item Este secret se usa en el paso de login a Docker Hub del workflow.
+        \end{itemize}
+        
+        \item \textbf{Nombre:} \texttt{TELEGRAM\_API\_TOKEN}
+        \begin{itemize}
+            \item \textbf{Valor:} El token del bot obtenido en el Paso 1 (ej: \texttt{123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11}).
+            \item Este secret se usa para la acción de notificación de Telegram.
+        \end{itemize}
+        
+        \item \textbf{Nombre:} \texttt{TELEGRAM\_ID\_CHAT}
+        \begin{itemize}
+            \item \textbf{Valor:} El ID del chat obtenido en el Paso 2 (ej: \texttt{987654321}).
+            \item Este secret especifica a qué chat de Telegram enviar las notificaciones.
+        \end{itemize}
+    \end{itemize}
+    
+    \item Para cada secret, ingresa el nombre, el valor, y haz clic en \textbf{Add secret}.
+    \item Los secrets aparecerán en la lista con una descripción de cuándo fueron actualizados.
+\end{enumerate}
+
+\subsubsection{Verificación}
+
+Una vez configurado todo:
+
+\begin{enumerate}
+    \item Realiza un \texttt{git push} a la rama \texttt{main} con cambios en \texttt{main.js}, \texttt{Dockerfile}, o \texttt{package.json}.
+    \item Dirígete a la pestaña \textbf{Actions} en GitHub.
+    \item Observa el workflow ejecutándose. Si todo es correcto, debe completarse con éxito en pocos minutos.
+    \item Verifica tu chat de Telegram. Deberías recibir un mensaje como:
+    \item 
+    \begin{center}
+        \textbf{[Éxito] Imagen Docker Subida} \\
+        Repositorio: JohnPV894/practica\_express.js\_docker \\
+        Rama: main \\
+        Autor: tu\_usuario \\
+        Imagen: johny050824/api\_docker\_compose:latest
+    \end{center}
+    \begin{center}
+      \includegraphics[width=0.9\textwidth]{img/VERIFICACION.png}
+    \end{center}
+\end{enumerate}
+
+%============================================================
+%                CONCLUSIÓN Y REFERENCIAS
+%============================================================
+\section{Conclusión}
+\label{sec:conclusion}
+
+Este documento ha presentado una arquitectura completa de DevOps que integra:
+
+\begin{itemize}
+    \item \textbf{Contenerización:} Encapsulación de la aplicación en Docker para portabilidad.
+    \item \textbf{Orquestación:} Gestión de múltiples servicios con Docker Compose.
+    \item \textbf{Automatización:} Pipeline CI/CD basado en GitHub Actions que construye y despliega automáticamente.
+    \item \textbf{Monitoreo:} Notificaciones en tiempo real mediante Telegram.
+\end{itemize}
+
+Esta solución proporciona un flujo de trabajo eficiente, seguro y auditable para el desarrollo y despliegue de aplicaciones modernas.
+
+
+\end{document}

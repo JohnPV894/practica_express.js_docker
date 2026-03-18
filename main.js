@@ -12,7 +12,7 @@ app.use(express.json());
 // // CONFIGURACION DE MONGO
 // ----------------------------------------------------
 
-const uriMongo = process.env.MONGO_URI ||"mongodb://localhost:27017";
+const uriMongo = process.env.MONGO_URI ||"mongodb://192.168.0.43:27017";
 const nombreBaseDeDatos = "gestionGruposUsuarios";
 let coleccionUsuarios; //  colección de Usuarios
 let coleccionGrupos;   //  colección de Grupos

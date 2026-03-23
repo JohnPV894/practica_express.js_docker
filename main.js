@@ -56,8 +56,8 @@ conectarMongo();
 // ----------------------------------------------------
 
 //PETICION RAIZ 
-app.get('/',async (req,res) => {
-    return res.status(200).send({mensaje:"Peticion raiz correcta" })
+app.get('/', async (req, res) => {
+    return res.status(200).send({ mensaje: "Peticion raiz correcta" });
 });
 // CREAR un nuevo usuario (POST)
 app.post('/usuarios', async (req, res) => {
